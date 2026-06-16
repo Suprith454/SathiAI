@@ -38,11 +38,16 @@ export default function useChat() {
 
       if (data.itinerary) {
         const params = data.parsed || {};
+        const p = { ...params, currency: params.currency || '$' };
+        if (typeof p.budget === 'string' && !['low','medium','high'].includes(p.budget)) {
+          const n = parseInt(p.budget.replace(/[^0-9]/g, ''), 10);
+          if (!isNaN(n)) p.budget = n;
+        }
         setItineraryData({
           ...data.itinerary,
-          _destination: params.destination || data.itinerary.destination || '',
-          _duration: params.duration || 3,
-          _params: params,
+          _destination: p.destination || data.itinerary.destination || '',
+          _duration: p.duration || 3,
+          _params: p,
         });
       }
     } catch {

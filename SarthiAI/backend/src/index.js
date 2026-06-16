@@ -29,6 +29,17 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use((err, _req, res, _next) => {
+  console.error('Global error handler:', err?.message || err);
+  res.status(err?.status || 500).json({
+    error: err?.message || 'Internal server error',
+  });
+});
+
 app.listen(config.port, () => {
   console.log(`SarthiAI backend running on port ${config.port}`);
 });
+
+
+
+

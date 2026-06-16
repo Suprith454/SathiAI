@@ -1,7 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-export default function DashboardLayout({ sidebar, children }) {
+export default function DashboardLayout({ sidebar, children, collapseOnItinerary }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const hadItineraryRef = useRef(false);
+
+  useEffect(() => {
+    if (collapseOnItinerary && !hadItineraryRef.current) {
+      setSidebarOpen(false);
+    }
+    hadItineraryRef.current = !!collapseOnItinerary;
+  }, [collapseOnItinerary]);
 
   return (
     <div className="h-full flex bg-slate-50">

@@ -2,12 +2,25 @@ import { useState } from 'react';
 import WeatherWidget from './WeatherWidget';
 import PhotoModal from './PhotoModal';
 import HeroSlideshow from './HeroSlideshow';
+import BudgetBreakdown from './BudgetBreakdown';
+import HotelCard from './HotelCard';
+import BookingDraft from './BookingDraft';
 
 const BUDGET_LABELS = { low: '💵 Budget', medium: '💰 Mid-Range', high: '💎 Luxury' };
+
+function formatBudget(budget, currency) {
+  if (budget == null) return '—';
+  if (typeof budget === 'object') {
+    return `${budget.currency || currency || '$'}${budget.total}`;
+  }
+  if (typeof budget === 'number') return `${currency || '$'}${budget}`;
+  return BUDGET_LABELS[budget] || budget;
+}
 
 export default function DashboardContent({ itinerary, weather, destination, heroPhotos }) {
   const [photoQuery, setPhotoQuery] = useState(null);
   const totalActivities = itinerary?.days?.reduce((sum, d) => sum + (d.activities?.length || 0), 0) || 0;
+  const effectiveWeather = weather || itinerary?.weather;
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-10">
@@ -28,7 +41,7 @@ export default function DashboardContent({ itinerary, weather, destination, hero
         <StatCard
           icon="💰"
           label="Budget"
-          value={itinerary?.budget ? (BUDGET_LABELS[itinerary.budget] || itinerary.budget) : '—'}
+          value={formatBudget(itinerary?.budget, itinerary?.currency)}
           delay={200}
         />
         <StatCard
@@ -46,17 +59,35 @@ export default function DashboardContent({ itinerary, weather, destination, hero
         interval={4000}
       />
 
-      {/* Weather */}
-      <WeatherWidget data={weather} />
+      {/* Agent Section: Budget */}
+      {itinerary?.budget && typeof itinerary.budget === 'object' && (
+        <BudgetBreakdown budget={itinerary.budget} />
+      )}
 
-      {/* Day Cards */}
+      {/* Agent Section: Weather */}
+      <WeatherWidget data={effectiveWeather} />
+
+      {/* Agent Section: Day Cards (Itinerary) */}
       {itinerary?.days && (
         <div className="space-y-6" id="itinerary-content">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-indigo-500 flex items-center justify-center text-white text-xs">📋</div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Day-by-Day Itinerary</h3>
+              <p className="text-[11px] text-slate-400">Agent: Itinerary Planner</p>
+            </div>
+          </div>
           {itinerary.days.map((day, idx) => (
             <DayCard key={idx} day={idx + 1} activities={day.activities} onPhotoClick={setPhotoQuery} />
           ))}
         </div>
       )}
+
+      {/* Agent Section: Hotels */}
+      <HotelCard hotels={itinerary?.hotels} currency={itinerary?.currency} />
+
+      {/* Agent Section: Booking Drafts */}
+      <BookingDraft emails={itinerary?.booking_emails} />
 
       {photoQuery && <PhotoModal query={photoQuery} onClose={() => setPhotoQuery(null)} />}
     </div>
@@ -150,7 +181,7 @@ function ActivityItem({ activity, index, onPhotoClick }) {
           )}
         </div>
         {activity.tips && (
-          <div className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5">
+          <div className="mt-2 flex items-start gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 rounded-lg px-2.5 py-1.5">
             <span className="text-xs">💡</span>
             <span>{activity.tips}</span>
           </div>

@@ -1,3 +1,5 @@
+const CURRENCY_OPTIONS = ['$', '₹', '€', '£', '¥'];
+
 const INTERESTS = [
   { label: 'Food', icon: '🍜' },
   { label: 'History', icon: '🏛️' },
@@ -8,11 +10,7 @@ const INTERESTS = [
   { label: 'Nightlife', icon: '🌃' },
 ];
 
-const BUDGETS = [
-  { value: 'low', label: 'Low', icon: '💵', desc: 'Budget-friendly' },
-  { value: 'medium', label: 'Medium', icon: '💰', desc: 'Balanced' },
-  { value: 'high', label: 'High', icon: '💎', desc: 'Premium' },
-];
+
 
 export default function ManualForm({ form, onChange, onGenerate, loading }) {
   const toggleInterest = (label) => {
@@ -31,6 +29,7 @@ export default function ManualForm({ form, onChange, onGenerate, loading }) {
       destination: form.destination.trim(),
       duration: form.duration,
       budget: form.budget,
+      currency: form.currency,
       interests: form.interests,
     });
   };
@@ -115,24 +114,31 @@ export default function ManualForm({ form, onChange, onGenerate, loading }) {
 
         {/* Budget */}
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-2 uppercase tracking-wider">Budget</label>
-          <div className="grid grid-cols-3 gap-2">
-            {BUDGETS.map((b) => (
-              <button
-                key={b.value}
-                type="button"
-                onClick={() => onChange({ ...form, budget: b.value })}
-                className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl text-xs font-medium border transition-all duration-200 cursor-pointer ${
-                  form.budget === b.value
-                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm shadow-indigo-200/50 scale-[1.02]'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600 hover:shadow-sm hover:shadow-slate-200/50'
-                }`}
+          <label className="text-xs font-semibold text-slate-600 block mb-1.5 uppercase tracking-wider">Budget</label>
+          <div className="flex gap-2">
+            <div className="flex-1 bg-white border border-slate-200 rounded-2xl px-4 py-3 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+              <label className="text-[11px] text-slate-400 font-medium block mb-1">Amount</label>
+              <input
+                type="number"
+                value={form.budget}
+                onChange={(e) => onChange({ ...form, budget: Math.max(0, parseInt(e.target.value) || 0) })}
+                min="0"
+                placeholder="e.g. 500"
+                className="w-full bg-transparent text-sm text-slate-800 outline-none"
+              />
+            </div>
+            <div className="w-28 bg-white border border-slate-200 rounded-2xl px-4 py-3 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+              <label className="text-[11px] text-slate-400 font-medium block mb-1">Currency</label>
+              <select
+                value={CURRENCY_OPTIONS.includes(form.currency) ? form.currency : '$'}
+                onChange={(e) => onChange({ ...form, currency: e.target.value })}
+                className="w-full bg-transparent text-sm text-slate-800 outline-none cursor-pointer"
               >
-                <span className="text-xl">{b.icon}</span>
-                <span className="font-semibold">{b.label}</span>
-                <span className="text-[10px] text-slate-400">{b.desc}</span>
-              </button>
-            ))}
+                {CURRENCY_OPTIONS.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

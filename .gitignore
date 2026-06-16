@@ -4,3 +4,9 @@ dist/
 *.log
 temp/
 .vscode/
+node_stdout.txt
+node_stderr.txt
+olm*.txt
+pull*.txt
+run*.txt
+*.pid

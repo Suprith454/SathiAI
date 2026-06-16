@@ -8,7 +8,7 @@ import PDFExportButton from './components/PDFExportButton';
 import useChat from './hooks/useChat';
 import useItinerary from './hooks/useItinerary';
 
-const EMPTY_FORM = { destination: '', startDate: '', endDate: '', duration: 1, budget: 'medium', interests: ['Food'] };
+const EMPTY_FORM = { destination: '', startDate: '', endDate: '', duration: 1, budget: 500, currency: '$', interests: ['Food'] };
 
 export default function App() {
   const chat = useChat();
@@ -21,20 +21,20 @@ export default function App() {
   const [suggestionPhotos, setSuggestionPhotos] = useState({});
   const [lastParams, setLastParams] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ duration: 3, interests: ['Food'], budget: 'medium' });
+  const [editForm, setEditForm] = useState({ duration: 3, interests: ['Food'], budget: 500, currency: '$' });
 
   const SUGGESTIONS = [
-    { name: 'Paris', duration: 5, budget: 'medium', interests: ['Food', 'Culture', 'History'], query: 'paris france eiffel tower' },
-    { name: 'Tokyo', duration: 7, budget: 'medium', interests: ['Food', 'Culture', 'Shopping'], query: 'tokyo japan shibuya' },
-    { name: 'Bali', duration: 6, budget: 'low', interests: ['Nature', 'Adventure', 'Culture'], query: 'bali indonesia beach' },
-    { name: 'New York', duration: 4, budget: 'high', interests: ['Culture', 'Shopping', 'Nightlife'], query: 'new york city skyline' },
-    { name: 'Dubai', duration: 5, budget: 'high', interests: ['Shopping', 'Adventure', 'Culture'], query: 'dubai uae burj' },
+    { name: 'Paris', duration: 5, budget: 1200, currency: '€', interests: ['Food', 'Culture', 'History'], query: 'paris france eiffel tower' },
+    { name: 'Tokyo', duration: 7, budget: 1500, currency: '¥', interests: ['Food', 'Culture', 'Shopping'], query: 'tokyo japan shibuya' },
+    { name: 'Bali', duration: 6, budget: 800, currency: '$', interests: ['Nature', 'Adventure', 'Culture'], query: 'bali indonesia beach' },
+    { name: 'New York', duration: 4, budget: 2000, currency: '$', interests: ['Culture', 'Shopping', 'Nightlife'], query: 'new york city skyline' },
+    { name: 'Dubai', duration: 5, budget: 2500, currency: '$', interests: ['Shopping', 'Adventure', 'Culture'], query: 'dubai uae burj' },
   ];
 
   useEffect(() => {
     if (chat.itineraryData && !manual.itinerary) {
       const p = chat.itineraryData._params;
-      if (p) setLastParams({ destination: p.destination, duration: p.duration || 3, interests: p.interests || ['Food'], budget: p.budget || 'medium' });
+      if (p) setLastParams({ destination: p.destination, duration: p.duration || 3, interests: p.interests || ['Food'], budget: p.budget ?? 500, currency: p.currency || '$' });
       manual.showFromChat(chat.itineraryData, p);
     }
   }, [chat.itineraryData]);
@@ -88,6 +88,7 @@ export default function App() {
 
   return (
     <DashboardLayout
+      collapseOnItinerary={!!manual.itinerary}
       sidebar={
         <ChatSidebar
           messages={chat.messages}
@@ -117,11 +118,11 @@ export default function App() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
-                <span>{lastParams.duration} days · {lastParams.budget} · {(lastParams.interests || []).join(', ')}</span>
+                <span>{lastParams.duration} days · {typeof lastParams.budget === 'number' ? `${lastParams.currency || '$'}${lastParams.budget}` : lastParams.budget} · {(lastParams.interests || []).join(', ')}</span>
               </div>
               <button
                 onClick={() => {
-                  setEditForm({ duration: lastParams.duration || 3, interests: lastParams.interests || ['Food'], budget: lastParams.budget || 'medium' });
+                  setEditForm({ duration: lastParams.duration || 3, interests: lastParams.interests || ['Food'], budget: lastParams.budget ?? 500, currency: lastParams.currency || '$' });
                   setEditOpen(true);
                 }}
                 className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition cursor-pointer"
@@ -161,14 +162,30 @@ export default function App() {
                   <button onClick={() => setEditForm(f => ({ ...f, duration: Math.min(30, f.duration + 1) }))} className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 text-lg cursor-pointer transition">+</button>
                 </div>
 
-                <label className="text-xs font-semibold text-slate-600 block mb-2 uppercase tracking-wider">Budget</label>
-                <div className="grid grid-cols-3 gap-2 mb-5">
-                  {[['low', '💵', 'Budget'], ['medium', '💰', 'Mid'], ['high', '💎', 'Luxury']].map(([val, icon, label]) => (
-                    <button key={val} onClick={() => setEditForm(f => ({ ...f, budget: val }))} className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-medium border transition cursor-pointer ${editForm.budget === val ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200'}`}>
-                      <span className="text-lg">{icon}</span>
-                      <span>{label}</span>
-                    </button>
-                  ))}
+                <label className="text-xs font-semibold text-slate-600 block mb-1.5 uppercase tracking-wider">Budget</label>
+                <div className="flex gap-2 mb-5">
+                  <div className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 focus-within:border-indigo-400 transition-all">
+                    <label className="text-[10px] text-slate-400 font-medium block mb-0.5">Amount</label>
+                    <input
+                      type="number"
+                      value={editForm.budget}
+                      onChange={(e) => setEditForm(f => ({ ...f, budget: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      min="0"
+                      className="w-full bg-transparent text-sm text-slate-800 outline-none"
+                    />
+                  </div>
+                  <div className="w-24 bg-white border border-slate-200 rounded-xl px-3 py-2 focus-within:border-indigo-400 transition-all">
+                    <label className="text-[10px] text-slate-400 font-medium block mb-0.5">Currency</label>
+                    <select
+                      value={['$', '₹', '€', '£', '¥'].includes(editForm.currency) ? editForm.currency : '$'}
+                      onChange={(e) => setEditForm(f => ({ ...f, currency: e.target.value }))}
+                      className="w-full bg-transparent text-sm text-slate-800 outline-none cursor-pointer"
+                    >
+                      {['$', '₹', '€', '£', '¥'].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <label className="text-xs font-semibold text-slate-600 block mb-2 uppercase tracking-wider">Interests</label>
@@ -187,7 +204,7 @@ export default function App() {
 
                 <div className="flex gap-3">
                   <button onClick={() => setEditOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer">Cancel</button>
-                  <button onClick={() => { const p = { ...lastParams, duration: editForm.duration, interests: editForm.interests, budget: editForm.budget }; setLastParams(p); setEditOpen(false); manual.generate(p); }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-lg shadow-indigo-500/20 transition cursor-pointer">
+                  <button onClick={() => { const p = { ...lastParams, duration: editForm.duration, interests: editForm.interests, budget: editForm.budget, currency: editForm.currency }; setLastParams(p); setEditOpen(false); manual.generate(p); }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-lg shadow-indigo-500/20 transition cursor-pointer">
                     Apply Changes
                   </button>
                 </div>
@@ -241,7 +258,7 @@ export default function App() {
                       <button
                         key={s.name}
                         onClick={() => {
-                          const p = { destination: s.name, duration: s.duration, budget: s.budget, interests: s.interests };
+                          const p = { destination: s.name, duration: s.duration, budget: s.budget, currency: s.currency, interests: s.interests };
                           setLastParams(p);
                           manual.generate(p);
                         }}
@@ -257,7 +274,7 @@ export default function App() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white/90 truncate">{s.name}</p>
-                          <p className="text-[10px] text-white/50">{s.duration} days · {s.budget} budget</p>
+                          <p className="text-[10px] text-white/50">{s.duration} days · {s.currency || '$'}{s.budget} budget</p>
                         </div>
                         <svg className="w-4 h-4 ml-auto shrink-0 text-white/30 group-hover:text-white/60 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="9 18 15 12 9 6" />
